@@ -1,5 +1,6 @@
 import pandas as pd
 from pathlib import Path
+from pelotas_budget_pipeline.schemas import DespesaBrutaSchema, ReceitaBrutaSchema
 
 RAW_DIR = Path(__file__).parent.parent.parent / "data" / "raw"
 
@@ -50,7 +51,7 @@ def extract_all(kind: str) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    receita = extract_all("receita")
+    receita = ReceitaBrutaSchema.validate(extract_all("receita"))
     print(receita.shape)
-    despesa = extract_all("despesa")
+    despesa = DespesaBrutaSchema.validate(extract_all("despesa"))
     print(despesa.shape)
