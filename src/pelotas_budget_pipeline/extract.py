@@ -33,6 +33,19 @@ def read_file(kind: str, year: int) -> pd.DataFrame:
     return df
 
 
+def read_reference(name: str) -> pd.DataFrame:
+    """Lê uma tabela de referência do TCE-RS.
+
+    Args:
+        name (str): nome do arquivo sem extensão ("funcoes" ou "subfuncoes").
+
+    Returns:
+        pd.DataFrame: tabela com os códigos e os nomes oficiais.
+    """
+    df = pd.read_csv(RAW_DIR / f"{name}.csv", encoding="utf-8", dtype=DTYPES)
+    return df
+
+
 def extract_all(kind: str) -> pd.DataFrame:
     """Recebe um tipo de dado (receita/despesa) e retorna dataframe de todos os dados concatenados.
     Args:
@@ -55,3 +68,5 @@ if __name__ == "__main__":
     print(receita.shape)
     despesa = DespesaBrutaSchema.validate(extract_all("despesa"))
     print(despesa.shape)
+    funcoes = read_reference("funcoes")
+    print(funcoes.dtypes)

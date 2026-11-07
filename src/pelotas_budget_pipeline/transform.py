@@ -1,0 +1,73 @@
+import pandas as pd
+
+from pelotas_budget_pipeline.extract import extract_all, read_reference
+from pelotas_budget_pipeline.schemas import DespesaBrutaSchema
+
+EXPENSE_COLUMNS = [
+    "ANO",
+    "CD_ORGAO_ORCAMENTARIO",
+    "NOME_ORGAO_ORCAMENTARIO",
+    "CD_FUNCAO",
+    "CD_SUBFUNCAO",
+    "CD_PROGRAMA",
+    "DS_PROGRAMA",
+    "CD_ELEMENTO",
+    "VL_DOTACAO_INICIAL",
+    "VL_PREVISAO_EXECUCAO",
+    "VL_EMPENHADO",
+    "VL_LIQUIDADO",
+    "VL_PAGO",
+]
+
+EXPENSE_NAMES = {
+    "ANO": "year",
+    "CD_ORGAO_ORCAMENTARIO": "department_code",
+    "NOME_ORGAO_ORCAMENTARIO": "department_name",
+    "CD_FUNCAO": "function_code",
+    "DS_FUNCAO": "function_name",
+    "CD_SUBFUNCAO": "subfunction_code",
+    "DS_SUBFUNCAO": "subfunction_name",
+    "CD_PROGRAMA": "program_code",
+    "DS_PROGRAMA": "program_name",
+    "CD_ELEMENTO": "element_code",
+    "VL_DOTACAO_INICIAL": "initial_budget",
+    "VL_PREVISAO_EXECUCAO": "updated_budget",
+    "VL_EMPENHADO": "committed_amount",
+    "VL_LIQUIDADO": "liquidated_amount",
+    "VL_PAGO": "paid_amount",
+}
+
+
+def transform_expenses(
+    df: pd.DataFrame, functions: pd.DataFrame, subfunctions: pd.DataFrame
+) -> pd.DataFrame:
+    """Limpa a despesa bruta e traz os nomes oficiais de função e subfunção.
+
+    Args:
+        df (pd.DataFrame): despesa bruta, já validada.
+        functions (pd.DataFrame): tabela de referência de funções.
+        subfunctions (pd.DataFrame): tabela de referência de subfunções.
+
+    Returns:
+        pd.DataFrame: despesa limpa, com colunas em inglês.
+    """
+    df = df[EXPENSE_COLUMNS]
+    n_rows = len(df)
+    df = df.merge(functions, on="CD_FUNCAO", how="left")
+    df = df.merge(subfunctions, on="CD_SUBFUNCAO", how="left")
+    assert len(df) == n_rows, "O merge mudou o número de linhas"
+    assert df["DS_FUNCAO"].notna().all(), "Há função sem nome"
+    assert df["DS_SUBFUNCAO"].notna().all(), "Há subfunção sem nome"
+    df = df.rename(columns=EXPENSE_NAMES)
+    return df
+
+
+if __name__ == "__main__":
+    pd.options.display.float_format = "{:,.2f}".format
+    despesas = DespesaBrutaSchema.validate(extract_all("despesa"))
+    funcoes = read_reference("funcoes")
+    subfuncoes = read_reference("subfuncoes")
+    expenses = transform_expenses(despesas, funcoes, subfuncoes)
+    print(expenses.shape)
+    print(expenses["function_name"].unique())
+    print(expenses.groupby("year")["committed_amount"].sum())
