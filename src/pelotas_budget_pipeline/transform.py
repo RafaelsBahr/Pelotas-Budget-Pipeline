@@ -1,7 +1,7 @@
 import pandas as pd
 
 from pelotas_budget_pipeline.extract import extract_all, read_reference
-from pelotas_budget_pipeline.schemas import DespesaBrutaSchema
+from pelotas_budget_pipeline.schemas import DespesaBrutaSchema, ReceitaBrutaSchema
 
 EXPENSE_COLUMNS = [
     "ANO",
@@ -62,12 +62,61 @@ def transform_expenses(
     return df
 
 
+REVENUE_COLUMNS = [
+    "ANO",
+    "CD_CONTA_SG",
+    "DS_CONTA_SG",
+    "VL_ORCADO",
+    "VL_ARRECADADO",
+]
+
+
+REVENUE_NAMES = {
+    "ANO": "year",
+    "CD_CONTA_SG": "account_code",
+    "DS_CONTA_SG": "account_name",
+    "VL_ORCADO": "estimated_budget",
+    "VL_ARRECADADO": "collected_amount",
+}
+
+REVENUE_CATEGORIES = {
+    "11": "Impostos, Taxas e Contribuições de Melhoria",
+    "12": "Contribuições",
+    "13": "Receita Patrimonial",
+    "16": "Receita de Serviços",
+    "17": "Transferências Correntes",
+    "19": "Outras Receitas Correntes",
+    "21": "Operações de Crédito",
+    "22": "Alienação de Bens",
+    "24": "Transferências de Capital",
+}
+
+
+def transform_revenues(df: pd.DataFrame) -> pd.DataFrame:
+    """Limpa a receita bruta e classifica cada conta pela origem do dinheiro.
+
+    Args:
+        df (pd.DataFrame): receita bruta, já validada.
+
+    Returns:
+        pd.DataFrame: receita líquida, uma linha por conta analítica, com colunas em inglês.
+    """
+    df = df.loc[df["NIVEL"] == "A", REVENUE_COLUMNS]
+    code = df["CD_CONTA_SG"]
+    adjusted_code = code.where(~code.str.startswith("9"), code.str[1:])
+    df["category_code"] = adjusted_code.str[:2]
+    df["category_name"] = df["category_code"].map(REVENUE_CATEGORIES)
+    assert df["category_name"].notna().all(), "Há conta sem categoria"
+    assert (df["category_code"] != "91").all(), "Sobrou dedução sem ajuste"
+    df = df.rename(columns=REVENUE_NAMES)
+    return df
+
+
 if __name__ == "__main__":
     pd.options.display.float_format = "{:,.2f}".format
-    despesas = DespesaBrutaSchema.validate(extract_all("despesa"))
-    funcoes = read_reference("funcoes")
-    subfuncoes = read_reference("subfuncoes")
-    expenses = transform_expenses(despesas, funcoes, subfuncoes)
-    print(expenses.shape)
-    print(expenses["function_name"].unique())
-    print(expenses.groupby("year")["committed_amount"].sum())
+    receita = extract_all("receita")
+    receita = ReceitaBrutaSchema.validate(receita)
+    revenues = transform_revenues(receita)
+    print(revenues.shape)
+    print(revenues.groupby("year")["collected_amount"].sum())
+    print(revenues.groupby(["year", "category_name"])["collected_amount"].sum())
