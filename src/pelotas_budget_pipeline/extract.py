@@ -34,13 +34,13 @@ def read_file(kind: str, year: int) -> pd.DataFrame:
 
 
 def read_reference(name: str) -> pd.DataFrame:
-    """Lê uma tabela de referência do TCE-RS.
+    """Lê uma tabela de referência (TCE-RS ou IBGE).
 
     Args:
-        name (str): nome do arquivo sem extensão ("funcoes" ou "subfuncoes").
+        name (str): nome do arquivo sem extensão ("funcoes", "subfuncoes" ou "populacao").
 
     Returns:
-        pd.DataFrame: tabela com os códigos e os nomes oficiais.
+        pd.DataFrame: a tabela lida.
     """
     df = pd.read_csv(RAW_DIR / f"{name}.csv", encoding="utf-8", dtype=DTYPES)
     return df
@@ -70,3 +70,6 @@ if __name__ == "__main__":
     print(despesa.shape)
     funcoes = read_reference("funcoes")
     print(funcoes.dtypes)
+    population = read_reference("populacao")
+    print(population)
+    print(population.dtypes)
