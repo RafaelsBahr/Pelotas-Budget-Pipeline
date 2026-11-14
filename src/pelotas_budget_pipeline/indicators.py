@@ -69,6 +69,55 @@ def expenses_by_function(
     return by_function
 
 
+def revenues_by_category(revenues: pd.DataFrame) -> pd.DataFrame:
+    """Receita orçada e arrecadada por ano e categoria.
+
+    Args:
+        revenues (pd.DataFrame): receita limpa, (saída de transform_revenues)
+
+    Returns:
+        pd.DataFrame: uma linha por ano e categoria
+    """
+    keys = ["year", "category_code", "category_name"]
+    by_category = (
+        revenues.groupby(keys)
+        .agg(
+            estimated_budget=("estimated_budget", "sum"),
+            collected_amount=("collected_amount", "sum"),
+        )
+        .reset_index()
+    )
+    by_category["pct_collected"] = (
+        by_category["collected_amount"] / by_category["estimated_budget"]
+    ).where(by_category["estimated_budget"] != 0)
+    year_total = by_category.groupby("year")["collected_amount"].transform("sum")
+    by_category["share_of_year"] = by_category["collected_amount"] / year_total
+    by_category = by_category.sort_values(
+        by=["year", "collected_amount"], ascending=[True, False]
+    )
+    return by_category
+
+
+def budget_execution(expenses: pd.DataFrame) -> pd.DataFrame:
+    """Dotação orçamentária x despesa empenhada por ano.
+
+    Args:
+        expenses (pd.DataFrame): despesa limpa (saída de transform_expenses).
+
+    Returns:
+        pd.DataFrame: uma linha por ano.
+    """
+    budget_columns = ["initial_budget", "updated_budget", "committed_amount"]
+    execution = expenses.groupby("year")[budget_columns].sum().reset_index()
+    execution["execution_rate_initial"] = (
+        execution["committed_amount"] / execution["initial_budget"]
+    )
+    execution["execution_rate_updated"] = (
+        execution["committed_amount"] / execution["updated_budget"]
+    )
+    return execution
+
+
 if __name__ == "__main__":
     pd.options.display.float_format = "{:,.2f}".format
     pd.options.display.max_columns = None
@@ -83,9 +132,16 @@ if __name__ == "__main__":
     receita = extract_all("receita")
     receita = ReceitaBrutaSchema.validate(receita)
     revenues = transform_revenues(receita)
-    teste = summary_by_year(expenses, revenues, populacao)
-    # print(teste)
-
+    summary = summary_by_year(expenses, revenues, populacao)
     by_function = expenses_by_function(expenses, populacao)
+    by_category = revenues_by_category(revenues)
+    execution = budget_execution(expenses)
+
+    print("\n== Resumo por ano ==")
+    print(summary)
+    print("\n== Despesa por função ==")
     print(by_function)
-    print(by_function.groupby("year")["share_of_year"].sum())
+    print("\n== Receita por categoria ==")
+    print(by_category)
+    print("\n== Execução orçamentária ==")
+    print(execution)
