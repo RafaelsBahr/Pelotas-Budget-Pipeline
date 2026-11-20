@@ -3,8 +3,11 @@ import pandas as pd
 from pelotas_budget_pipeline.extract import extract_all, read_reference
 from pelotas_budget_pipeline.schemas import DespesaBrutaSchema, ReceitaBrutaSchema
 from pelotas_budget_pipeline.transform import transform_expenses, transform_revenues
+from pelotas_budget_pipeline.utils import log_decorator, timer_decorator
 
 
+@log_decorator
+@timer_decorator
 def summary_by_year(
     expenses: pd.DataFrame, revenues: pd.DataFrame, population: pd.DataFrame
 ) -> pd.DataFrame:
@@ -38,6 +41,8 @@ def summary_by_year(
     return summary
 
 
+@log_decorator
+@timer_decorator
 def expenses_by_function(
     expenses: pd.DataFrame, population: pd.DataFrame
 ) -> pd.DataFrame:
@@ -69,6 +74,8 @@ def expenses_by_function(
     return by_function
 
 
+@log_decorator
+@timer_decorator
 def revenues_by_category(revenues: pd.DataFrame) -> pd.DataFrame:
     """Receita orçada e arrecadada por ano e categoria.
 
@@ -98,6 +105,8 @@ def revenues_by_category(revenues: pd.DataFrame) -> pd.DataFrame:
     return by_category
 
 
+@log_decorator
+@timer_decorator
 def budget_execution(expenses: pd.DataFrame) -> pd.DataFrame:
     """Dotação orçamentária x despesa empenhada por ano.
 
