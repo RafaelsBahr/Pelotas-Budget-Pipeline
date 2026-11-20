@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
 from pelotas_budget_pipeline.schemas import DespesaBrutaSchema, ReceitaBrutaSchema
+from pelotas_budget_pipeline.utils import log_decorator, timer_decorator
 
 RAW_DIR = Path(__file__).parent.parent.parent / "data" / "raw"
 
@@ -33,6 +34,8 @@ def read_file(kind: str, year: int) -> pd.DataFrame:
     return df
 
 
+@log_decorator
+@timer_decorator
 def read_reference(name: str) -> pd.DataFrame:
     """Lê uma tabela de referência (TCE-RS ou IBGE).
 
@@ -46,6 +49,8 @@ def read_reference(name: str) -> pd.DataFrame:
     return df
 
 
+@log_decorator
+@timer_decorator
 def extract_all(kind: str) -> pd.DataFrame:
     """Recebe um tipo de dado (receita/despesa) e retorna dataframe de todos os dados concatenados.
     Args:

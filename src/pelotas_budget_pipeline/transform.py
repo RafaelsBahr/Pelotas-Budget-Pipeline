@@ -2,6 +2,7 @@ import pandas as pd
 
 from pelotas_budget_pipeline.extract import extract_all, read_reference
 from pelotas_budget_pipeline.schemas import DespesaBrutaSchema, ReceitaBrutaSchema
+from pelotas_budget_pipeline.utils import log_decorator, timer_decorator
 
 EXPENSE_COLUMNS = [
     "ANO",
@@ -38,6 +39,8 @@ EXPENSE_NAMES = {
 }
 
 
+@log_decorator
+@timer_decorator
 def transform_expenses(
     df: pd.DataFrame, functions: pd.DataFrame, subfunctions: pd.DataFrame
 ) -> pd.DataFrame:
@@ -92,6 +95,8 @@ REVENUE_CATEGORIES = {
 }
 
 
+@log_decorator
+@timer_decorator
 def transform_revenues(df: pd.DataFrame) -> pd.DataFrame:
     """Limpa a receita bruta e classifica cada conta pela origem do dinheiro.
 
