@@ -101,6 +101,10 @@ pelotas-budget-pipeline/
 
 ## Findings (2024–2025)
 
+![Power BI dashboard, 2025](docs/dashboard.png)
+
+*Power BI dashboard built on the four Parquet tables (2025 selected). The `.pbix` file is not versioned.*
+
 Values in R$ million, except per capita values (R$).
 
 | | 2024 | 2025 |
@@ -132,7 +136,6 @@ Values in R$ million, except per capita values (R$).
 
 - Run the pipeline with 2021–2023 to test that it handles new years without code changes.
 - Project 2, with SQL: monthly data, the water and sewage agency (SANEP), the City Council, and comparison with other cities.
-- Optional: a Power BI dashboard reading the Parquet files.
 
 ## About this project
 
